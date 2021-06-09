@@ -1,0 +1,14 @@
+[
+  {
+    "API": "Yahoo",
+    "region": "US",
+    "symbol": "TSLA",
+    "notify_at": "19:00"
+  },
+  {
+    "API": null,
+    "region": "DE",
+    "symbol": "SIE",
+    "notify_at": "19:00"
+  }
+]

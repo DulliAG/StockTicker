@@ -1,0 +1,160 @@
+{
+  "explains": [],
+  "count": 15,
+  "quotes": [
+    {
+      "exchange": "NMS",
+      "shortname": "Tesla, Inc.",
+      "quoteType": "EQUITY",
+      "symbol": "TSLA",
+      "index": "quotes",
+      "score": 1438027.0,
+      "typeDisp": "Equity",
+      "longname": "Tesla, Inc.",
+      "isYahooFinance": true
+    },
+    {
+      "exchange": "GER",
+      "shortname": "TESLA INC. DL -,001",
+      "quoteType": "EQUITY",
+      "symbol": "TL0.DE",
+      "index": "quotes",
+      "score": 21271.0,
+      "typeDisp": "Equity",
+      "longname": "Tesla, Inc.",
+      "isYahooFinance": true
+    },
+    {
+      "exchange": "MEX",
+      "shortname": "TESLA INC",
+      "quoteType": "EQUITY",
+      "symbol": "TSLA.MX",
+      "index": "quotes",
+      "score": 20659.0,
+      "typeDisp": "Equity",
+      "longname": "Tesla, Inc.",
+      "isYahooFinance": true
+    },
+    {
+      "exchange": "FRA",
+      "shortname": "TESLA INC. DL -,001",
+      "quoteType": "EQUITY",
+      "symbol": "TL0.F",
+      "index": "quotes",
+      "score": 20415.0,
+      "typeDisp": "Equity",
+      "longname": "Tesla, Inc.",
+      "isYahooFinance": true
+    },
+    {
+      "exchange": "LSE",
+      "shortname": "GRANITESHARES FINANCIAL PLC GRA",
+      "quoteType": "EQUITY",
+      "symbol": "3LTS.L",
+      "index": "quotes",
+      "score": 20286.0,
+      "typeDisp": "Equity",
+      "longname": "GraniteShares 3x Long Tesla Daily ETP",
+      "isYahooFinance": true
+    },
+    {
+      "exchange": "LSE",
+      "shortname": "GRANITESHARES FINANCIAL PLC GRA",
+      "quoteType": "EQUITY",
+      "symbol": "3STS.L",
+      "index": "quotes",
+      "score": 20273.0,
+      "typeDisp": "Equity",
+      "longname": "GraniteShares 3x Short Tesla Daily ETP",
+      "isYahooFinance": true
+    },
+    {
+      "exchange": "PNK",
+      "shortname": "TESLA EXPLORATION LTD",
+      "quoteType": "EQUITY",
+      "symbol": "TXLZF",
+      "index": "quotes",
+      "score": 20173.0,
+      "typeDisp": "Equity",
+      "longname": "Tesla Exploration Ltd.",
+      "isYahooFinance": true
+    }
+  ],
+  "news": [
+    {
+      "uuid": "d86a831d-5824-3219-921c-0f651fb9aa9d",
+      "title": "Wealthiest Americans Pay Little Income Tax: Report",
+      "publisher": "The Fiscal Times",
+      "link": "https://finance.yahoo.com/news/wealthiest-americans-pay-little-income-223320552.html",
+      "providerPublishTime": 1623191600,
+      "type": "STORY"
+    },
+    {
+      "uuid": "fbfa0162-191f-3b5f-aaa1-d78098376863",
+      "title": "KBS Sells Four-Building, 100% Leased, 372,763-Square-Foot Class A Industrial/Flex Park in Austin, Texas",
+      "publisher": "Business Wire",
+      "link": "https://finance.yahoo.com/news/kbs-sells-four-building-100-222600966.html",
+      "providerPublishTime": 1623191160,
+      "type": "STORY"
+    },
+    {
+      "uuid": "cf897472-39c1-34e6-8edc-3fc68411c2e2",
+      "title": "Investors Grip Wheel with Two Hands Amid Rising Anxiety",
+      "publisher": "Investopedia",
+      "link": "https://finance.yahoo.com/m/cf897472-39c1-34e6-8edc-3fc68411c2e2/investors-grip-wheel-with-two.html",
+      "providerPublishTime": 1623189965,
+      "type": "STORY"
+    },
+    {
+      "uuid": "78192b40-8c7b-3459-a588-3f0cc9978d95",
+      "title": "Mitek Systems Appoints New Board Member and Chief Financial Officer",
+      "publisher": "Business Wire",
+      "link": "https://finance.yahoo.com/news/mitek-systems-appoints-board-member-214900657.html",
+      "providerPublishTime": 1623188940,
+      "type": "STORY"
+    },
+    {
+      "uuid": "c94ec6e7-047e-30b2-b23a-c7dba90003a1",
+      "title": "Trucks VC launches two new funds for early and late-stage transportation startups",
+      "publisher": "TechCrunch",
+      "link": "https://finance.yahoo.com/m/c94ec6e7-047e-30b2-b23a-c7dba90003a1/trucks-vc-launches-two-new.html",
+      "providerPublishTime": 1623188648,
+      "type": "STORY"
+    },
+    {
+      "uuid": "8ea1033c-8555-3fdc-849b-124871c02566",
+      "title": "How Much $10,000 Invested This Year In AMC Stock Is Worth Now",
+      "publisher": "Investor's Business Daily",
+      "link": "https://finance.yahoo.com/m/8ea1033c-8555-3fdc-849b-124871c02566/how-much-%2410%2C000-invested.html",
+      "providerPublishTime": 1623186438,
+      "type": "STORY"
+    },
+    {
+      "uuid": "a2ce3254-ba89-3a93-a320-b42dbc870ea2",
+      "title": "Utility Monopolies Are To Blame For America’s Infrastructure Woes",
+      "publisher": "Oilprice.com",
+      "link": "https://finance.yahoo.com/news/utility-monopolies-blame-america-infrastructure-210000235.html",
+      "providerPublishTime": 1623186000,
+      "type": "STORY"
+    },
+    {
+      "uuid": "98ab30f8-c044-3c1c-bffc-1f6be1d7f9c0",
+      "title": "GLOBAL MARKETS-Stocks touch new highs as volatility eases, dollar gains",
+      "publisher": "Reuters",
+      "link": "https://finance.yahoo.com/news/global-markets-stocks-touch-highs-204312654.html",
+      "providerPublishTime": 1623184992,
+      "type": "STORY"
+    }
+  ],
+  "nav": [],
+  "lists": [],
+  "researchReports": [],
+  "totalTime": 33,
+  "timeTakenForQuotes": 424,
+  "timeTakenForNews": 600,
+  "timeTakenForAlgowatchlist": 400,
+  "timeTakenForPredefinedScreener": 400,
+  "timeTakenForCrunchbase": 0,
+  "timeTakenForNav": 400,
+  "timeTakenForResearchReports": 0
+}
