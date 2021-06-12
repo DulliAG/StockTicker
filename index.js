@@ -5,90 +5,131 @@ const client = new Discord.Client();
 const cron = require("cron").CronJob;
 const list = require("./list.json");
 
-class Stock {
-  constructor(region, ticker) {
-    this.region = region;
     this.ticker = ticker;
+class Alphavantage {
+  constructor() {
+    this.keys = process.env.ALPHAVANTAGE_KEY.split(",");
+    this.keyAmount = this.keys.length;
   }
 
   /**
-   * STOCK INFORMATION
-   * result.region
-   * result.quoteType
-   * result.currency
-   * result.dividendsPerShare
-   * result.exchangeTimezoneName, result.exchangeTimezoneShortName
-   * result.longName
-   * result.shortName
-   * result.market
-   *
-   * DAILY
-   * result.regularMarketChange
-   * result.regularMarketChangePercent
-   * result.regularMarketDayHigh
-   * result.regularMarketDayLow
-   * result.regularMarketDayRange
-   * result.regularMarketOpen
-   * result.regularMarketPreviousClose
-   * result.regularMarketPrice
-   *
-   * 52 WEEKS
-   * result.fiftyDayAverage, result.fiftyDayAverageChange, result.fiftyDayAverageChangePercent, result.fiftyTwoWeekHigh, result.fiftyTwoWeekHighChange, result.fiftyTwoWeekHighChangePercent, result.fiftyTwoWeekLow, result.fiftyTwoWeekLowChange, result.fiftyTwoWeekLowChangePercent, result.fiftyTwoWeekRange
-   * @returns {object}
+   * @returns {string} Alphavatage API-Key
    */
-  async getQuote() {
-    const response = await fetch(
-      `https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?region=${this.region}&symbols=${this.ticker}`,
-      {
-        method: "GET",
-        headers: {
-          "x-rapidapi-key": process.env.RAPID_API_KEY,
-          "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
-        },
-      }
-    );
-    const quote = await response.json();
-    return quote.quoteResponse;
+  random() {
+    return this.keys[Math.floor(Math.random() * this.keyAmount)];
+  }
+}
+
+class Stock {
+  /**
+   * @param {string} key
+   * @param {boolean} full
+   * @param {string} exchange
+   * @param {string} symbol
+   * @param {string} company_name
+   */
+  constructor(key, full, exchange, symbol, company_name) {
+    this.key = key;
+    this.full = full;
+    this.exchange = exchange;
+    this.symbol = symbol;
+    this.company_name = company_name;
+    this.requestOptions = {
+      method: "GET",
+    };
   }
 
-  async sendMessage(result) {
-    const currency = result.currency;
+  async get() {
+    var response, json, data;
+    if (!this.full) {
+      response = await fetch(
+        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${this.symbol}&apikey=${this.key}`,
+        this.requestOptions
+      );
+      json = await response.json();
+    } else {
+      response = await fetch(
+        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${this.exchange}:${this.symbol}&apikey=${this.key}`,
+        this.requestOptions
+      );
+      json = await response.json();
+    }
+    data = json["Global Quote"];
+    data = {
+      company: this.company_name,
+      exchange: this.exchange,
+      symbol: this.symbol,
+      current_price: parseFloat(data["05. price"]),
+      open: parseFloat(data["02. open"]),
+      close: parseFloat(data["08. previous close"]),
+      high: parseFloat(data["03. high"]),
+      low: parseFloat(data["04. low"]),
+      change: parseFloat(data["09. change"]),
+      change_percent: parseFloat(data["10. change percent"]),
+      last_trading_day: data["07. latest trading day"],
+    };
+    return data;
+  }
+
+  async sendMessage(
+    exchange,
+    symbol,
+    company_name,
+    open,
+    close,
+    change,
+    change_percent,
+    low,
+    high,
+    current_price,
+    last_trading_day
+  ) {
     const msg = {
       content: `Hey, <@&${process.env.ROLE}> here are some new results...`,
       embed: {
-        title: `${result.region} • ${result.shortName}`,
+        title: `${exchange}:${symbol} • ${company_name}`,
         color: 5814783,
         fields: [
           {
             name: "Open",
-            value: `${result.regularMarketOpen.toLocaleString(undefined)} ${currency}`,
+            value: open.toLocaleString(undefined),
             inline: true,
           },
           {
             name: "Closed",
-            value: `${result.regularMarketPreviousClose.toLocaleString(undefined)} ${currency}`,
+            value: close.toLocaleString(undefined),
             inline: true,
           },
           {
             name: "Change",
-            value: `${result.regularMarketChange.toLocaleString(
+            value: `${change.toLocaleString(undefined)} (${change_percent.toLocaleString(
               undefined
-            )} ${currency} (${result.regularMarketChangePercent.toLocaleString(undefined)} %)`,
+            )} %)`,
             inline: true,
           },
           {
             name: "Low",
-            value: `${result.regularMarketDayLow.toLocaleString(undefined)} ${currency}`,
+            value: low.toLocaleString(undefined),
             inline: true,
           },
           {
             name: "High",
-            value: `${result.regularMarketDayHigh.toLocaleString(undefined)} ${currency}`,
+            value: high.toLocaleString(undefined),
             inline: true,
           },
           {
             name: "Range",
-            value: "150.00 - 200.00",
+            value: `${low.toLocaleString(undefined)} - ${high.toLocaleString(undefined)}`,
+            inline: true,
+          },
+          {
+            name: "Current price",
+            value: open.toLocaleString(undefined),
+            inline: true,
+          },
+          {
+            name: "Last trading day",
+            value: open.toLocaleString(undefined),
             inline: true,
           },
         ],
@@ -100,19 +141,77 @@ class Stock {
   }
 }
 
-client.on("ready", () => {
+client.on("ready", async () => {
   console.log(`Logged in as ${client.user.tag}!`);
 
-  const nasdaq = new cron("0 1 22 * * 1-5", () => {
-    var americanStocks = list.filter((stock) => stock.API == "Yahoo");
-    americanStocks.forEach(async (stock) => {
-      let s = new Stock(stock.region, stock.symbol);
-      let quote = await s.getQuote();
-      let result = quote.result[0];
-      s.sendMessage(result);
+  const dailyStocks = new cron("0 1 22 * * 1-5", () => {
+    list.forEach(async (item) => {
+      try {
+        const stock = new Stock(item.key, item.full, item.exchange, item.symbol, item.company_name);
+        const stockData = await stock.get();
+        await stock.sendMessage(
+          stock.exchange,
+          stock.symbol,
+          stock.company_name,
+          stockData.open,
+          stockData.close,
+          stockData.change,
+          stockData.change_percent,
+          stockData.low,
+          stockData.high,
+          stockData.current_price,
+          stockData.last_trading_day
+        );
+      } catch (error) {
+        console.error(error);
+      }
     });
   });
-  nasdaq.start();
+  dailyStocks.start();
+});
+
+client.on("message", (msg) => {
+  if (msg.content.substr(0, 3) == "!st") {
+    var input = msg.content,
+      splitted = input.split(/ /g),
+      cmdPrefix = splitted[0],
+      cmd = splitted[1],
+      action = cmd;
+
+    if (!msg.author.bot) {
+      switch (action) {
+        case "all":
+          list.forEach(async (item) => {
+            try {
+              const stock = new Stock(
+                item.key,
+                item.full,
+                item.exchange,
+                item.symbol,
+                item.company_name
+              );
+              const stockData = await stock.get();
+              await stock.sendMessage(
+                stock.exchange,
+                stock.symbol,
+                stock.company_name,
+                stockData.open,
+                stockData.close,
+                stockData.change,
+                stockData.change_percent,
+                stockData.low,
+                stockData.high,
+                stockData.current_price,
+                stockData.last_trading_day
+              );
+            } catch (error) {
+              console.error(error);
+            }
+          });
+          break;
+      }
+    }
+  }
 });
 
 client.login(process.env.TOKEN);

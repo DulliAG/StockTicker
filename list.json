@@ -1,14 +1,30 @@
 [
   {
-    "API": "Yahoo",
-    "region": "US",
+    "full": false,
+    "company_name": "Tesla INC.",
+    "exchange": "NASDAQ",
     "symbol": "TSLA",
-    "notify_at": "19:00"
+    "key": "B1WHFSMADIS2NFSP"
   },
   {
-    "API": null,
-    "region": "DE",
+    "full": true,
+    "company_name": "Siemens AG",
+    "exchange": "FRA",
     "symbol": "SIE",
-    "notify_at": "19:00"
+    "key": "Q7IHEUIMP5B7E58"
+  },
+  {
+    "full": true,
+    "company_name": "Siemens Energy",
+    "exchange": "ETR",
+    "symbol": "ENR",
+    "key": "NI6I88ICPXP3VF22"
+  },
+  {
+    "full": false,
+    "company_name": "Microsoft",
+    "exchange": "NASDAQ",
+    "symbol": "MSFT",
+    "key": "6940"
   }
 ]
