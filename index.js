@@ -5,7 +5,6 @@ const client = new Discord.Client();
 const cron = require("cron").CronJob;
 const list = require("./list.json");
 
-    this.ticker = ticker;
 class Alphavantage {
   constructor() {
     this.keys = process.env.ALPHAVANTAGE_KEY.split(",");
