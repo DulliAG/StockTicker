@@ -1,1 +1,51 @@
-[{"full":false,"company_name":"Tesla INC.","exchange":"NASDAQ","symbol":"TSLA","key":"B1WHFSMADIS2NFSP"},{"full":true,"company_name":"Siemens AG","exchange":"FRA","symbol":"SIE","key":"Q7IHEUIMP5B7E58"},{"full":true,"company_name":"Siemens Energy","exchange":"ETR","symbol":"ENR","key":"NI6I88ICPXP3VF22"},{"full":false,"company_name":"Microsoft","exchange":"NASDAQ","symbol":"MSFT","key":"6940"},{"full":true,"company_name":"Amazon","exchange":"ETR","symbol":"AMZ","key":"P7EFSFWZBM0WU9TG"},{"full":true,"company_name":"Apple","exchange":"NASDAQ","symbol":"AAPL","key":"P9KMH4A26J3R6VJX"},{"full":true,"company_name":"Volkswagen","exchange":"ETR","symbol":"VOW3","key":"NSL4QJVRIOVCM9MA,"}]
+[
+  {
+    "full": false,
+    "company_name": "Tesla INC.",
+    "exchange": "NASDAQ",
+    "symbol": "TSLA",
+    "key": "B1WHFSMADIS2NFSP"
+  },
+  {
+    "full": true,
+    "company_name": "Siemens AG",
+    "exchange": "FRA",
+    "symbol": "SIE",
+    "key": "Z2JJQ4D7SYNYZL89"
+  },
+  {
+    "full": true,
+    "company_name": "Siemens Energy",
+    "exchange": "ETR",
+    "symbol": "ENR",
+    "key": "NI6I88ICPXP3VF22"
+  },
+  {
+    "full": false,
+    "company_name": "Microsoft",
+    "exchange": "NASDAQ",
+    "symbol": "MSFT",
+    "key": "6940"
+  },
+  {
+    "full": true,
+    "company_name": "Amazon",
+    "exchange": "ETR",
+    "symbol": "AMZ",
+    "key": "P7EFSFWZBM0WU9TG"
+  },
+  {
+    "full": false,
+    "company_name": "Apple",
+    "exchange": "NASDAQ",
+    "symbol": "AAPL",
+    "key": "P9KMH4A26J3R6VJX"
+  },
+  {
+    "full": true,
+    "company_name": "Volkswagen",
+    "exchange": "ETR",
+    "symbol": "VOW3",
+    "key": "NSL4QJVRIOVCM9MA,"
+  }
+]
