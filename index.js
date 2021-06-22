@@ -112,61 +112,68 @@ class Stock {
     current_price,
     last_trading_day
   ) {
-    console.log("send message for", symbol);
-    const msg = {
-      content: `Hey, <@&${process.env.ROLE}> hier sind die aktuellen Ergebnisse...`,
-      embed: {
-        title: `${exchange}:${symbol} • ${company_name}`,
-        color: 5814783,
-        fields: [
-          {
-            name: "Geöffnet",
-            value: open.toLocaleString(undefined),
-            inline: true,
-          },
-          {
-            name: "Geschlossen",
-            value: close.toLocaleString(undefined),
-            inline: true,
-          },
-          {
-            name: "Änderung",
-            value: `${change.toLocaleString(undefined)} (${change_percent.toLocaleString(
-              undefined
-            )} %)`,
-            inline: true,
-          },
-          {
-            name: "Tief",
-            value: low.toLocaleString(undefined),
-            inline: true,
-          },
-          {
-            name: "Hoch",
-            value: high.toLocaleString(undefined),
-            inline: true,
-          },
-          {
-            name: "Weite",
-            value: `${low.toLocaleString(undefined)} - ${high.toLocaleString(undefined)}`,
-            inline: true,
-          },
-          {
-            name: "Aktueller Preis",
-            value: current_price,
-            inline: true,
-          },
-          {
-            name: "Gehandelt am",
-            value: last_trading_day,
-            inline: true,
-          },
-        ],
-      },
-    };
+    try {
+      console.log("send message for", symbol);
+      const msg = {
+        content: `Hey, <@&${process.env.ROLE}> hier sind die aktuellen Ergebnisse...`,
+        embed: {
+          title: `${exchange}:${symbol} • ${company_name}`,
+          color: 5814783,
+          fields: [
+            {
+              name: "Geöffnet",
+              value: open.toLocaleString(undefined),
+              inline: true,
+            },
+            {
+              name: "Geschlossen",
+              value: current_price.toLocaleString(undefined),
+              inline: true,
+            },
+            {
+              name: "Änderung",
+              value: `${change.toLocaleString(undefined)} (${change_percent.toLocaleString(
+                undefined
+              )} %)`,
+              inline: true,
+            },
+            {
+              name: "Tief",
+              value: low.toLocaleString(undefined),
+              inline: true,
+            },
+            {
+              name: "Hoch",
+              value: high.toLocaleString(undefined),
+              inline: true,
+            },
+            {
+              name: "Weite",
+              value: `${low.toLocaleString(undefined)} - ${high.toLocaleString(undefined)}`,
+              inline: true,
+            },
+            {
+              name: "Aktueller Preis",
+              value: current_price,
+              inline: true,
+            },
+            {
+              name: "Gehandelt am",
+              value: last_trading_day,
+              inline: true,
+            },
+          ],
+        },
+      };
 
-    const channel = client.channels.cache.find((channel) => channel.id == process.env.CHANNEL);
-    channel.send(msg).catch((err) => console.error("ERROR:", err));
+      const channel = client.channels.cache.find((channel) => channel.id == process.env.CHANNEL);
+      channel.send(msg).catch((err) => {
+        throw err;
+      });
+      console.log("Message for " + this.symbol + " was sent!");
+    } catch (error) {
+      console.error(errro);
+    }
   }
 }
 
@@ -224,19 +231,23 @@ client.on("message", (msg) => {
               );
               const stockData = await stock.get();
               console.log("Send message stock:", stockData);
-              await stock.sendMessage(
-                stock.exchange,
-                stock.symbol,
-                stock.company_name,
-                stockData.open,
-                stockData.close,
-                stockData.change,
-                stockData.change_percent,
-                stockData.low,
-                stockData.high,
-                stockData.current_price,
-                stockData.last_trading_day
-              );
+              await stock
+                .sendMessage(
+                  stock.exchange,
+                  stock.symbol,
+                  stock.company_name,
+                  stockData.open,
+                  stockData.close,
+                  stockData.change,
+                  stockData.change_percent,
+                  stockData.low,
+                  stockData.high,
+                  stockData.current_price,
+                  stockData.last_trading_day
+                )
+                .catch((err) => {
+                  throw err;
+                });
             } catch (error) {
               console.error(error);
             }
