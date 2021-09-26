@@ -1,0 +1,1 @@
+screen -XS StockTicker quit
