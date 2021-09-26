@@ -35,19 +35,23 @@ client.on("ready", async () => {
     fs.readFile("list.json", "utf-8", (err, data) => {
       if (err) throw err;
       const json = JSON.parse(data.toString());
-      json.forEach(async (item) => {
+      json.forEach((item, index) => {
         try {
-          const stock = new Stock(item.exchange, item.symbol, item.company_name);
-          stock
-            .get()
-            .then((data) => {
-              stock.sendMessage(data, client).catch((err) => {
+          // Add an little break to prevent 429 - Too Many Requests
+          // We're only able to send 5 requests per second
+          setTimeout(function () {
+            const stock = new Stock(item.exchange, item.symbol, item.company_name);
+            stock
+              .get()
+              .then((data) => {
+                stock.sendMessage(data, client).catch((err) => {
+                  throw err;
+                });
+              })
+              .catch((err) => {
                 throw err;
               });
-            })
-            .catch((err) => {
-              throw err;
-            });
+          }, index * 250);
         } catch (error) {
           helper.error(error);
         }
@@ -76,19 +80,23 @@ client.on("message", (msg) => {
       fs.readFile("list.json", "utf-8", (err, data) => {
         if (err) throw err;
         const json = JSON.parse(data.toString());
-        json.forEach((item) => {
+        json.forEach((item, index) => {
           try {
-            const stock = new Stock(item.exchange, item.symbol, item.company_name);
-            stock
-              .get()
-              .then((data) => {
-                stock.sendMessage(data, client).catch((err) => {
+            // Add an little break to prevent 429 - Too Many Requests
+            // We're only able to send 5 requests per second
+            setTimeout(function () {
+              const stock = new Stock(item.exchange, item.symbol, item.company_name);
+              stock
+                .get()
+                .then((data) => {
+                  stock.sendMessage(data, client).catch((err) => {
+                    throw err;
+                  });
+                })
+                .catch((err) => {
                   throw err;
                 });
-              })
-              .catch((err) => {
-                throw err;
-              });
+            }, index * 250);
           } catch (error) {
             helper.error(error);
           }
