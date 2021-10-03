@@ -3,7 +3,6 @@ const client = new Discord.Client();
 const cron = require("cron").CronJob;
 const helper = require("@dulliag/discord-helper");
 const fs = require("fs");
-const { Stock } = require("./Stock");
 // Config files
 const { settings } = require("../config.json");
 
@@ -18,14 +17,15 @@ const credentialContent = {
     marketstack: "ENTER_KEY",
   },
 };
-if (!helper.credentialFileExists(settings.credentials)) {
-  const success = helper.createCredentialFile(settings.credentials, credentialContent);
+if (!helper.credentialFileExists("." + settings.credentials)) {
+  const success = helper.createCredentialFile("." + settings.credentials, credentialContent);
   success
     ? helper.log("Credential file created!")
     : helper.error("Creation of credential file failed!");
   process.exit(0);
 }
 
+const { Stock } = require("./Stock");
 const { bot } = require("." + settings.credentials);
 
 client.on("ready", async () => {
