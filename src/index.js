@@ -3,8 +3,41 @@ const client = new Discord.Client();
 const cron = require("cron").CronJob;
 const helper = require("@dulliag/discord-helper");
 const fs = require("fs");
+const { StockData } = require("./StockData");
+const fetch = require("node-fetch");
 // Config files
 const { settings } = require("../config.json");
+
+/**
+ *
+ * @param {Date} date
+ * @returns {string}
+ */
+const getWeekday = (date) => {
+  return date.toLocaleDateString("de-DE", { weekday: "long" });
+};
+
+/**
+ *
+ * @param {Date} endDate
+ * @param {number} numDays
+ * @returns {Date}
+ */
+const futureDateByDays = (endDate, numDays) => {
+  return new Date(endDate.setDate(endDate.getDate() - numDays));
+};
+
+/**
+ *
+ * @param {Date} date
+ * @returns {string}
+ */
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${year}-${month < 10 ? "0" + month : month}-${day < 10 ? "0" + day : day}`;
+};
 
 // Check if the credentials file exists
 // If this isn't case we're gonna create the file and stop the application
@@ -26,38 +59,172 @@ if (!helper.credentialFileExists("." + settings.credentials)) {
 }
 
 const { Stock } = require("./Stock");
-const { bot } = require("." + settings.credentials);
+const { bot, api } = require("." + settings.credentials);
 
 client.on("ready", async () => {
   helper.log(`Logged in as ${client.user.tag}!`);
 
   const dailyStocks = new cron(settings.cron_pattern, () => {
-    fs.readFile("list.json", "utf-8", (err, data) => {
+    fs.readFile("../list.json", "utf-8", (err, data) => {
       if (err) throw err;
       const json = JSON.parse(data.toString());
-      json.forEach((item, index) => {
-        try {
-          // Add an little break to prevent 429 - Too Many Requests
-          // We're only able to send 5 requests per second
-          setTimeout(function () {
-            const stock = new Stock(item.exchange, item.symbol, item.company_name);
-            stock
-              .get()
-              .then((data) => {
-                stock.sendMessage(data, client).catch((err) => {
+      const todayWeekday = getWeekday(new Date());
+
+      // TODO Check if this works fine
+      if (todayWeekday !== "Freitag") {
+        json.forEach((item, index) => {
+          try {
+            // Add an little break to prevent 429 - Too Many Requests
+            // We're only able to send 5 requests per second
+            setTimeout(function () {
+              const stock = new Stock(item.exchange, item.symbol, item.company_name);
+              stock
+                .get()
+                .then((data) => {
+                  stock.sendEmbedWithoutChart(data, client).catch((err) => {
+                    throw err;
+                  });
+                })
+                .catch((err) => {
                   throw err;
                 });
-              })
-              .catch((err) => {
-                throw err;
+            }, index * 250);
+          } catch (error) {
+            helper.error(error);
+          }
+        });
+      } else {
+        const symbols = [];
+        json.forEach((item) => {
+          const stock = new Stock(item.exchange, item.symbol, item.company_name);
+          symbols.push(
+            stock.requiresExchange() ? `${stock.symbol}.${stock.exchange}` : stock.symbol
+          );
+        });
+        const symbolString = symbols.join();
+
+        const stringifiedEndDate = new Date(); // 2021-10-01 TODO Check if this works fine after friday
+        const today = new Date(stringifiedEndDate);
+        const dates = [
+          formatDate(futureDateByDays(new Date(stringifiedEndDate), 4)),
+          formatDate(futureDateByDays(new Date(stringifiedEndDate), 3)),
+          formatDate(futureDateByDays(new Date(stringifiedEndDate), 2)),
+          formatDate(futureDateByDays(new Date(stringifiedEndDate), 1)),
+          formatDate(today),
+        ];
+
+        const url = `http://api.marketstack.com/v1/eod?access_key=${
+          api.marketstack
+        }&symbols=${symbolString}&date_from=${dates[0]}&date_to=${dates[dates.length - 1]}`;
+        fetch(url, {
+          method: "GET",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // TODO Check if this works fine
+            const stockData = data.data.reverse();
+            const dailyGrouped = new Map();
+
+            for (let i = 0; i < dates.length; i++) {
+              const day = dates[i];
+              const dayResult = stockData.slice(
+                i * symbols.length,
+                i * symbols.length + symbols.length
+              );
+              dailyGrouped.set(day, dayResult);
+            }
+
+            symbols.forEach((symbol) => {
+              const matchedStock = json.find((item) => item.symbol === symbol.split(".")[0]);
+              const stock = new Stock(
+                matchedStock.exchange,
+                matchedStock.symbol,
+                matchedStock.company_name
+              );
+              const requiredStockSymbol = stock.requiresExchange()
+                ? stock.symbol + "." + stock.exchange
+                : stock.symbol;
+              const labels = [];
+              const prices = [];
+
+              dailyGrouped.forEach((day, key) => {
+                labels.push(getWeekday(new Date(key /*day.date*/))); // labels.push(key)
+                prices.push(day.find((s) => s.symbol == requiredStockSymbol).adj_close);
               });
-          }, index * 250);
-        } catch (error) {
-          helper.error(error);
-        }
-      });
+
+              // TODO Check if this works fine
+              const baseUrl = "https://quickchart.io/chart?bkg=rgba(255,255,255,0)&c=";
+              const chart = {
+                type: "line",
+                data: {
+                  labels: labels,
+                  datasets: [
+                    {
+                      label: "Marketprice",
+                      data: prices,
+                    },
+                  ],
+                },
+                options: {
+                  title: {
+                    display: true,
+                    text: stock.symbol + "." + stock.exchange,
+                    fontSize: 18,
+                    fontColor: "white",
+                  },
+                  legend: {
+                    labels: {
+                      fontColor: "white",
+                    },
+                  },
+                  scales: {
+                    yAxes: [
+                      {
+                        ticks: {
+                          fontColor: "white",
+                        },
+                      },
+                    ],
+                    xAxes: [
+                      {
+                        ticks: {
+                          fontColor: "white",
+                        },
+                      },
+                    ],
+                  },
+                },
+              };
+
+              // TODO Check if this works fine
+              const fridayStockData = dailyGrouped
+                .get(dates[dates.length - 1])
+                .find((data) => data.symbol == requiredStockSymbol);
+              stock
+                .sendEmbedWithChart(
+                  new StockData(
+                    stock.company_name,
+                    fridayStockData.exchange,
+                    fridayStockData.symbol.split(".")[0],
+                    fridayStockData.close,
+                    fridayStockData.open,
+                    fridayStockData.close,
+                    fridayStockData.high,
+                    fridayStockData.low,
+                    fridayStockData.close - fridayStockData.open,
+                    ((fridayStockData.close - fridayStockData.open) * 100) / fridayStockData.close,
+                    new Date(fridayStockData.date)
+                  ),
+                  baseUrl + JSON.stringify(chart),
+                  client
+                )
+                .catch((err) => console.error(err));
+            });
+          });
+      }
     });
   });
+  dailyStocks.fireOnTick(true);
   dailyStocks.start();
 });
 
@@ -89,7 +256,7 @@ client.on("message", (msg) => {
               stock
                 .get()
                 .then((data) => {
-                  stock.sendMessage(data, client).catch((err) => {
+                  stock.sendEmbedWithoutChart(data, client).catch((err) => {
                     throw err;
                   });
                 })
@@ -217,5 +384,6 @@ client.on("message", (msg) => {
       // Send command list as reply
       break;
   }
-}),
-  client.login(bot.token);
+});
+
+client.login(bot.token);

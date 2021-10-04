@@ -22,8 +22,22 @@ class Stock {
    * @param {string} exchange Stock exchange
    * @returns {boolean}
    */
-  requiresExchange(exchange) {
+  requiresExchange(exchange = this.exchange) {
     return exchange !== "XNAS" && exchange !== "IEXG";
+  }
+
+  async getRaw() {
+    try {
+      const url = this.requiresExchange(this.exchange)
+        ? `http://api.marketstack.com/v1/eod?access_key=${api.marketstack}&symbols=${this.symbol}.${this.exchange}`
+        : `http://api.marketstack.com/v1/eod?access_key=${api.marketstack}&symbols=${this.symbol}`;
+      const req = await fetch(url);
+      if (req.status !== 200) throw req.status + " " + req.statusText;
+      const res = await req.json();
+      return res.data;
+    } catch (error) {
+      helper.error(error);
+    }
   }
 
   async get() {
@@ -55,8 +69,10 @@ class Stock {
 
   /**
    * @param {StockData} stock
+   * @param {string} quickchartUrl
+   * @param {*} client
    */
-  async sendMessage(stock, client) {
+  async sendEmbedWithoutChart(stock, client) {
     try {
       /**
        * @param {number} price
@@ -110,6 +126,81 @@ class Stock {
               inline: true,
             },
           ],
+        },
+      };
+
+      const channel = client.channels.cache.find((channel) => channel.id == settings.channel);
+      channel.send(msg).catch((err) => {
+        throw err;
+      });
+      helper.log(`Message for ${this.symbol}.${this.exchange} was sent!`);
+    } catch (error) {
+      helper.error(error);
+    }
+  }
+
+  /**
+   * @param {StockData} stock
+   * @param {string} quickchartUrl
+   * @param {*} client
+   */
+  async sendEmbedWithChart(stock, quickchartUrl, client) {
+    try {
+      /**
+       * @param {number} price
+       */
+      const formatPrice = (price) => {
+        return price.toLocaleString("de-DE", {
+          style: "currency",
+          currency: "EUR",
+        });
+      };
+
+      const msg = {
+        content: `Hey, <@&${settings.role}> hier sind die aktuellen Ergebnisse...`,
+        embed: {
+          title: `${stock.symbol}.${stock.exchange} • ${stock.company}`,
+          color: settings.color,
+          fields: [
+            {
+              name: "Geöffnet",
+              value: formatPrice(stock.open),
+              inline: true,
+            },
+            {
+              name: "Geschlossen",
+              value: formatPrice(stock.close),
+              inline: true,
+            },
+            {
+              name: "Änderung",
+              value: `${formatPrice(stock.change)} (${stock.change_percent.toLocaleString()} %)`,
+              inline: true,
+            },
+            {
+              name: "Tief",
+              value: formatPrice(stock.low),
+              inline: true,
+            },
+            {
+              name: "Hoch",
+              value: formatPrice(stock.high),
+              inline: true,
+            },
+            {
+              name: "Weite",
+              value: `${formatPrice(stock.low)} - ${formatPrice(stock.high)}`,
+              inline: true,
+            },
+            {
+              name: "Current price",
+              value: formatPrice(stock.close),
+              inline: true,
+            },
+          ],
+          image: {
+            url: quickchartUrl,
+          },
         },
       };
 
