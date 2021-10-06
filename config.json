@@ -3,6 +3,15 @@
     "credentials": "./credentials.json",
     "prefix": "!st",
     "cron_pattern": "0 1 22 * * 1-5",
+    "valid_channel_names": [
+      "stocks",
+      "tickers",
+      "ticker",
+      "shares",
+      "aktien",
+      "wertpapiere",
+      "kurse"
+    ],
     "channel": "812546406363562015",
     "role": "851979261421158451",
     "color": 5814783

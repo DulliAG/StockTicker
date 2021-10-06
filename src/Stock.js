@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
 const helper = require("@dulliag/discord-helper");
 const { StockData } = require("./StockData");
+const { findChannelsOnServer } = require("./getChannel");
 // Config files
 const { settings } = require("../config.json");
 const { api } = require("." + settings.credentials);
@@ -72,7 +73,7 @@ class Stock {
    * @param {string} quickchartUrl
    * @param {*} client
    */
-  async sendEmbedWithoutChart(stock, client) {
+  async sendEmbedWithoutChart(stock, channel) {
     try {
       /**
        * @param {number} price
@@ -129,11 +130,21 @@ class Stock {
         },
       };
 
-      const channel = client.channels.cache.find((channel) => channel.id == settings.channel);
-      channel.send(msg).catch((err) => {
-        throw err;
-      });
-      helper.log(`Message for ${this.symbol}.${this.exchange} was sent!`);
+      // client.guilds.cache.forEach((guild) => {
+      //   const GUILD_ID = guild.id;
+      //   findChannelsOnServer(client, GUILD_ID).forEach((channel) => {
+      //     channel.send(msg).catch((err) => {
+      //       throw err;
+      //     });
+      //     helper.log(`${guild.name} | Message for ${this.symbol}.${this.exchange} was sent!`);
+      //   });
+      // });
+      channel
+        .send(msg)
+        .then(() => helper.log(`Message for ${this.symbol}.${this.exchange} was sent!`))
+        .catch((err) => {
+          throw err;
+        });
     } catch (error) {
       helper.error(error);
     }
@@ -142,9 +153,9 @@ class Stock {
   /**
    * @param {StockData} stock
    * @param {string} quickchartUrl
-   * @param {*} client
+   * @param {*} channel
    */
-  async sendEmbedWithChart(stock, quickchartUrl, client) {
+  async sendEmbedWithChart(stock, quickchartUrl, channel) {
     try {
       /**
        * @param {number} price
@@ -204,11 +215,12 @@ class Stock {
         },
       };
 
-      const channel = client.channels.cache.find((channel) => channel.id == settings.channel);
-      channel.send(msg).catch((err) => {
-        throw err;
-      });
-      helper.log(`Message for ${this.symbol}.${this.exchange} was sent!`);
+      channel
+        .send(msg)
+        .then(() => helper.log(`Message for ${this.symbol}.${this.exchange} was sent!`))
+        .catch((err) => {
+          throw err;
+        });
     } catch (error) {
       helper.error(error);
     }

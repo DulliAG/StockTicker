@@ -1,10 +1,12 @@
 const Discord = require("discord.js");
 const client = new Discord.Client();
 const cron = require("cron").CronJob;
-const helper = require("@dulliag/discord-helper");
-const fs = require("fs");
-const { StockData } = require("./StockData");
 const fetch = require("node-fetch");
+const fs = require("fs");
+//
+const helper = require("@dulliag/discord-helper");
+const { StockData } = require("./StockData");
+const { getStockChannels, findChannelsOnServer } = require("./getChannel");
 // Config files
 const { settings } = require("../config.json");
 
@@ -64,6 +66,10 @@ const { bot, api } = require("." + settings.credentials);
 client.on("ready", async () => {
   helper.log(`Logged in as ${client.user.tag}!`);
 
+  client.guilds.cache.forEach((guild) => {
+    helper.log(`Running on ${guild.name}`);
+  });
+
   const dailyStocks = new cron(settings.cron_pattern, () => {
     fs.readFile("../list.json", "utf-8", (err, data) => {
       if (err) throw err;
@@ -78,16 +84,21 @@ client.on("ready", async () => {
             // We're only able to send 5 requests per second
             setTimeout(function () {
               const stock = new Stock(item.exchange, item.symbol, item.company_name);
-              stock
-                .get()
-                .then((data) => {
-                  stock.sendEmbedWithoutChart(data, client).catch((err) => {
-                    throw err;
-                  });
-                })
-                .catch((err) => {
-                  throw err;
+              client.guilds.cache.forEach((guild) => {
+                const GUILD_ID = guild.id;
+                findChannelsOnServer(client, GUILD_ID).forEach((channel) => {
+                  stock
+                    .get()
+                    .then((data) => {
+                      stock.sendEmbedWithoutChart(data, channel).catch((err) => {
+                        throw err;
+                      });
+                    })
+                    .catch((err) => {
+                      throw err;
+                    });
                 });
+              });
             }, index * 250);
           } catch (error) {
             helper.error(error);
@@ -200,31 +211,38 @@ client.on("ready", async () => {
               const fridayStockData = dailyGrouped
                 .get(dates[dates.length - 1])
                 .find((data) => data.symbol == requiredStockSymbol);
-              stock
-                .sendEmbedWithChart(
-                  new StockData(
-                    stock.company_name,
-                    fridayStockData.exchange,
-                    fridayStockData.symbol.split(".")[0],
-                    fridayStockData.close,
-                    fridayStockData.open,
-                    fridayStockData.close,
-                    fridayStockData.high,
-                    fridayStockData.low,
-                    fridayStockData.close - fridayStockData.open,
-                    ((fridayStockData.close - fridayStockData.open) * 100) / fridayStockData.close,
-                    new Date(fridayStockData.date)
-                  ),
-                  baseUrl + JSON.stringify(chart),
-                  client
-                )
-                .catch((err) => console.error(err));
+
+              client.guilds.cache.forEach((guild) => {
+                const GUILD_ID = guild.id;
+                findChannelsOnServer(client, GUILD_ID).forEach((channel) => {
+                  stock
+                    .sendEmbedWithChart(
+                      new StockData(
+                        stock.company_name,
+                        fridayStockData.exchange,
+                        fridayStockData.symbol.split(".")[0],
+                        fridayStockData.close,
+                        fridayStockData.open,
+                        fridayStockData.close,
+                        fridayStockData.high,
+                        fridayStockData.low,
+                        fridayStockData.close - fridayStockData.open,
+                        ((fridayStockData.close - fridayStockData.open) * 100) /
+                          fridayStockData.close,
+                        new Date(fridayStockData.date)
+                      ),
+                      baseUrl + JSON.stringify(chart),
+                      client
+                    )
+                    .catch((err) => console.error(err));
+                });
+              });
             });
           });
       }
     });
   });
-  dailyStocks.fireOnTick(true);
+  // dailyStocks.fireOnTick(true); // Only for dev-purposes
   dailyStocks.start();
 });
 
@@ -244,7 +262,7 @@ client.on("message", (msg) => {
     // <prefix> <all||get-all>
     case "all":
     case "get-all":
-      fs.readFile("list.json", "utf-8", (err, data) => {
+      fs.readFile("../list.json", "utf-8", (err, data) => {
         if (err) throw err;
         const json = JSON.parse(data.toString());
         json.forEach((item, index) => {
@@ -256,7 +274,7 @@ client.on("message", (msg) => {
               stock
                 .get()
                 .then((data) => {
-                  stock.sendEmbedWithoutChart(data, client).catch((err) => {
+                  stock.sendEmbedWithoutChart(data, msg.channel).catch((err) => {
                     throw err;
                   });
                 })
