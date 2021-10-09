@@ -71,7 +71,7 @@ client.on("ready", async () => {
   });
 
   const dailyStocks = new cron(settings.cron_pattern, () => {
-    fs.readFile("../list.json", "utf-8", (err, data) => {
+    fs.readFile(settings.list, "utf-8", (err, data) => {
       if (err) throw err;
       const json = JSON.parse(data.toString());
       const todayWeekday = getWeekday(new Date());
@@ -242,7 +242,7 @@ client.on("ready", async () => {
       }
     });
   });
-  // dailyStocks.fireOnTick(true); // Only for dev-purposes
+  dailyStocks.fireOnTick(true); // Only for dev-purposes
   dailyStocks.start();
 });
 

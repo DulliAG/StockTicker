@@ -1,6 +1,7 @@
 {
   "settings": {
     "credentials": "./credentials.json",
+    "list": "./list.json",
     "prefix": "!st",
     "cron_pattern": "0 1 22 * * 1-5",
     "valid_channel_names": [
