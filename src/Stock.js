@@ -1,10 +1,10 @@
-const fetch = require("node-fetch");
-const helper = require("@dulliag/discord-helper");
-const { StockData } = require("./StockData");
-const { findChannelsOnServer } = require("./getChannel");
+const fetch = require('node-fetch');
+const helper = require('@dulliag/discord-helper');
+const { StockData } = require('./StockData');
+const { findChannelsOnServer } = require('./getChannel');
 // Config files
-const { settings } = require("../config.json");
-const { api } = require("." + settings.credentials);
+const { settings } = require('../config.json');
+const { api } = require('.' + settings.credentials);
 
 class Stock {
   /**
@@ -24,7 +24,7 @@ class Stock {
    * @returns {boolean}
    */
   requiresExchange(exchange = this.exchange) {
-    return exchange !== "XNAS" && exchange !== "IEXG";
+    return exchange !== 'XNAS' && exchange !== 'IEXG';
   }
 
   async getRaw() {
@@ -33,7 +33,7 @@ class Stock {
         ? `http://api.marketstack.com/v1/eod?access_key=${api.marketstack}&symbols=${this.symbol}.${this.exchange}`
         : `http://api.marketstack.com/v1/eod?access_key=${api.marketstack}&symbols=${this.symbol}`;
       const req = await fetch(url);
-      if (req.status !== 200) throw req.status + " " + req.statusText;
+      if (req.status !== 200) throw req.status + ' ' + req.statusText;
       const res = await req.json();
       return res.data;
     } catch (error) {
@@ -47,13 +47,13 @@ class Stock {
         ? `http://api.marketstack.com/v1/eod?access_key=${api.marketstack}&symbols=${this.symbol}.${this.exchange}`
         : `http://api.marketstack.com/v1/eod?access_key=${api.marketstack}&symbols=${this.symbol}`;
       const req = await fetch(url);
-      if (req.status !== 200) throw req.status + " " + req.statusText;
+      if (req.status !== 200) throw req.status + ' ' + req.statusText;
       const res = await req.json();
       const data = res.data[0]; // Latest trading day
       return new StockData(
         this.company_name,
         data.exchange,
-        data.symbol.split(".")[0],
+        data.symbol.split('.')[0],
         data.close,
         data.open,
         data.close,
@@ -79,9 +79,9 @@ class Stock {
        * @param {number} price
        */
       const formatPrice = (price) => {
-        return price.toLocaleString("de-DE", {
-          style: "currency",
-          currency: "EUR",
+        return price.toLocaleString('de-DE', {
+          style: 'currency',
+          currency: 'EUR',
         });
       };
 
@@ -92,37 +92,37 @@ class Stock {
           color: settings.color,
           fields: [
             {
-              name: "Geöffnet",
+              name: 'Geöffnet',
               value: formatPrice(stock.open),
               inline: true,
             },
             {
-              name: "Geschlossen",
+              name: 'Geschlossen',
               value: formatPrice(stock.close),
               inline: true,
             },
             {
-              name: "Änderung",
+              name: 'Änderung',
               value: `${formatPrice(stock.change)} (${stock.change_percent.toLocaleString()} %)`,
               inline: true,
             },
             {
-              name: "Tief",
+              name: 'Tief',
               value: formatPrice(stock.low),
               inline: true,
             },
             {
-              name: "Hoch",
+              name: 'Hoch',
               value: formatPrice(stock.high),
               inline: true,
             },
             {
-              name: "Weite",
+              name: 'Weite',
               value: `${formatPrice(stock.low)} - ${formatPrice(stock.high)}`,
               inline: true,
             },
             {
-              name: "Current price",
+              name: 'Current price',
               value: formatPrice(stock.close),
               inline: true,
             },
@@ -161,9 +161,9 @@ class Stock {
        * @param {number} price
        */
       const formatPrice = (price) => {
-        return price.toLocaleString("de-DE", {
-          style: "currency",
-          currency: "EUR",
+        return price.toLocaleString('de-DE', {
+          style: 'currency',
+          currency: 'EUR',
         });
       };
 
@@ -174,37 +174,37 @@ class Stock {
           color: settings.color,
           fields: [
             {
-              name: "Geöffnet",
+              name: 'Geöffnet',
               value: formatPrice(stock.open),
               inline: true,
             },
             {
-              name: "Geschlossen",
+              name: 'Geschlossen',
               value: formatPrice(stock.close),
               inline: true,
             },
             {
-              name: "Änderung",
+              name: 'Änderung',
               value: `${formatPrice(stock.change)} (${stock.change_percent.toLocaleString()} %)`,
               inline: true,
             },
             {
-              name: "Tief",
+              name: 'Tief',
               value: formatPrice(stock.low),
               inline: true,
             },
             {
-              name: "Hoch",
+              name: 'Hoch',
               value: formatPrice(stock.high),
               inline: true,
             },
             {
-              name: "Weite",
+              name: 'Weite',
               value: `${formatPrice(stock.low)} - ${formatPrice(stock.high)}`,
               inline: true,
             },
             {
-              name: "Current price",
+              name: 'Current price',
               value: formatPrice(stock.close),
               inline: true,
             },
