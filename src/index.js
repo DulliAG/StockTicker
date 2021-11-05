@@ -11,6 +11,7 @@ const { formatDate, futureDateByDays, getWeekday } = require('./Date');
 const { createChart } = require('./Quickchart');
 // Config files
 const { settings } = require('../config.json');
+const { version } = require('../package.json');
 
 const REQUEST_TIMEOUT = 350;
 
@@ -163,13 +164,15 @@ client.on('ready', async () => {
       }
     });
   });
-  dailyStocks.fireOnTick(true); // Only for dev-purposes
+  // dailyStocks.fireOnTick(true); // Only for dev-purposes
   dailyStocks.start();
 });
 
 client.on('message', (msg) => {
-  if (msg.content.substr(0, settings.prefix.length) !== settings.prefix && helper.isBot(msg.author))
+  const messagePrefix = msg.content.substr(0, settings.prefix.length);
+  if (messagePrefix !== settings.prefix || helper.isBot(msg.author)) {
     return;
+  }
 
   const input = msg.content,
     args = input.split(/ /g),
@@ -180,6 +183,11 @@ client.on('message', (msg) => {
   let itemIndex = -1;
 
   switch (action) {
+    case 'VERSION':
+    case 'version':
+      msg.reply(`ich laufe auf der Version ${version}!`);
+      break;
+
     // <prefix> <all||get-all>
     case 'all':
     case 'get-all':
