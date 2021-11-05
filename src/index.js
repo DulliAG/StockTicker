@@ -4,16 +4,6 @@ const cron = require('cron').CronJob;
 const fetch = require('node-fetch');
 const fs = require('fs');
 const helper = require('@dulliag/discord-helper');
-//
-const { StockData } = require('./StockData');
-const { getStockChannels, findChannelsOnServer } = require('./getChannel');
-const { formatDate, futureDateByDays, getWeekday } = require('./Date');
-const { createChart } = require('./Quickchart');
-// Config files
-const { settings } = require('../config.json');
-const { version } = require('../package.json');
-
-const REQUEST_TIMEOUT = 350;
 
 // Check if the credentials file exists
 // If this isn't case we're gonna create the file and stop the application
@@ -33,6 +23,17 @@ if (!helper.credentialFileExists(__dirname + settings.credentials)) {
     : helper.error('Creation of credential file failed!');
   process.exit(0);
 }
+
+//
+const { StockData } = require('./StockData');
+const { getStockChannels, findChannelsOnServer } = require('./getChannel');
+const { formatDate, futureDateByDays, getWeekday } = require('./Date');
+const { createChart } = require('./Quickchart');
+// Config files
+const { settings } = require('../config.json');
+const { version } = require('../package.json');
+
+const REQUEST_TIMEOUT = 350;
 
 const { Stock } = require('./Stock');
 const { bot, api } = require(__dirname + settings.credentials);
