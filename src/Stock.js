@@ -4,7 +4,7 @@ const { StockData } = require('./StockData');
 const { findChannelsOnServer } = require('./getChannel');
 // Config files
 const { settings } = require('../config.json');
-const { api } = require('.' + settings.credentials);
+const { api } = require(__dirname + settings.credentials);
 
 class Stock {
   /**

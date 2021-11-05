@@ -26,8 +26,8 @@ const credentialContent = {
     marketstack: 'ENTER_KEY',
   },
 };
-if (!helper.credentialFileExists('.' + settings.credentials)) {
-  const success = helper.createCredentialFile('.' + settings.credentials, credentialContent);
+if (!helper.credentialFileExists(__dirname + settings.credentials)) {
+  const success = helper.createCredentialFile(__dirname + settings.credentials, credentialContent);
   success
     ? helper.log('Credential file created!')
     : helper.error('Creation of credential file failed!');
@@ -35,14 +35,14 @@ if (!helper.credentialFileExists('.' + settings.credentials)) {
 }
 
 const { Stock } = require('./Stock');
-const { bot, api } = require('.' + settings.credentials);
+const { bot, api } = require(__dirname + settings.credentials);
 
 client.on('ready', async () => {
   helper.log(`Logged in as ${client.user.tag}!`);
   client.guilds.cache.forEach((guild) => helper.log(`Running on ${guild.name}`));
 
   const dailyStocks = new cron(settings.cron_pattern, () => {
-    fs.readFile(settings.list, 'utf-8', (err, data) => {
+    fs.readFile(__dirname + settings.list, 'utf-8', (err, data) => {
       if (err) throw err;
       const json = JSON.parse(data.toString());
 
@@ -191,7 +191,7 @@ client.on('message', (msg) => {
     // <prefix> <all||get-all>
     case 'all':
     case 'get-all':
-      fs.readFile('../list.json', 'utf-8', (err, data) => {
+      fs.readFile(__dirname + settings.list, 'utf-8', (err, data) => {
         if (err) throw err;
         const json = JSON.parse(data.toString());
         json.forEach((item, index) => {
@@ -220,7 +220,7 @@ client.on('message', (msg) => {
 
     // <prefix> list
     case 'list':
-      fs.readFile('list.json', 'utf-8', (err, data) => {
+      fs.readFile(__dirname + settings.list, 'utf-8', (err, data) => {
         if (err) throw err;
         const stocks = JSON.parse(data.toString());
         const fields = [];
@@ -271,7 +271,7 @@ client.on('message', (msg) => {
         exchange: args[3].split('.')[1],
       };
 
-      fs.readFile('list.json', 'utf-8', (err, data) => {
+      fs.readFile(__dirname + settings.list, 'utf-8', (err, data) => {
         if (err) throw err;
         const json = JSON.parse(data.toString());
         // Check we're already following this stock
@@ -286,7 +286,7 @@ client.on('message', (msg) => {
         // Add stock
         const stock = new Stock(argValues.exchange, argValues.symbol, argValues.company_name);
         json.push(stock);
-        fs.writeFile('list.json', JSON.stringify(json), (err) => {
+        fs.writeFile(__dirname + settings.list, JSON.stringify(json), (err) => {
           if (err) throw err;
         });
 
@@ -306,7 +306,7 @@ client.on('message', (msg) => {
         exchange: args[2].split('.')[1],
       };
 
-      fs.readFile('list.json', 'utf-8', (err, data) => {
+      fs.readFile(__dirname + settings.list, 'utf-8', (err, data) => {
         if (err) throw err;
         const json = JSON.parse(data.toString());
         itemIndex = json.findIndex(
@@ -319,7 +319,7 @@ client.on('message', (msg) => {
         }
 
         const updatedList = JSON.stringify(json.filter((stock, index) => index !== itemIndex));
-        fs.writeFile('list.json', updatedList, (err) => {
+        fs.writeFile(__dirname + settings.list, updatedList, (err) => {
           if (err) throw err;
         });
         msg.reply(`die Aktie ${argValues.symbol}.${argValues.exchange} wurde entfernt!`);
