@@ -15,15 +15,26 @@ const credentialContent = {
     token: 'ENTER_TOKEN',
     clientId: 'ENTER_CLIENT_ID',
   },
+  database: {
+    host: 'HOST',
+    user: 'USER',
+    password: 'PASSWORD',
+    database: 'DATABASE',
+  },
   api: {
     marketstack: 'ENTER_KEY',
   },
 };
 if (!helper.credentialFileExists(__dirname + settings.credentials)) {
+  logger.warn('Credentials', 'Credentials.json not found!');
   const success = helper.createCredentialFile(__dirname + settings.credentials, credentialContent);
-  success
-    ? helper.log('Credential file created!')
-    : helper.error('Creation of credential file failed!');
+  if (success) {
+    logger.log('Credentials', 'Credential file created!');
+    helper.log('Credential file created!');
+  } else {
+    logger.log('Credentials', 'Creation of credential file failed!');
+    helper.error('Creation of credential file failed!');
+  }
   process.exit(0);
 }
 
@@ -37,104 +48,116 @@ const REQUEST_TIMEOUT = 350;
 
 const { Stock } = require('./Stock');
 const { bot, api } = require(__dirname + settings.credentials);
+const { logger } = require('./Log');
+const PRODUCTION = true;
 
 client.on('ready', async () => {
+  if (PRODUCTION) helper.log(`${client.user.tag} is running in production mode!`);
   helper.log(`Logged in as ${client.user.tag}!`);
+  if (PRODUCTION) logger.log('Bot started', `${client.user.tag} started!`);
   client.guilds.cache.forEach((guild) => helper.log(`Running on ${guild.name}`));
 
   const dailyStocks = new cron(settings.cron_pattern, () => {
+    if (PRODUCTION) logger.log('Getting stocks', `Getting daily stocks!`);
     fs.readFile(__dirname + settings.list, 'utf-8', (err, data) => {
       if (err) throw err;
       const json = JSON.parse(data.toString());
 
       if (getWeekday(new Date()) == 'Freitag') {
-        const symbols = json.map((item) => {
-            const stock = new Stock(item.exchange, item.symbol, item.company_name);
-            return stock.requiresExchange() ? `${stock.symbol}.${stock.exchange}` : stock.symbol;
-          }),
-          symbolString = symbols.join();
+        try {
+          const symbols = json.map((item) => {
+              const stock = new Stock(item.exchange, item.symbol, item.company_name);
+              return stock.requiresExchange() ? `${stock.symbol}.${stock.exchange}` : stock.symbol;
+            }),
+            symbolString = symbols.join();
 
-        const today = new Date();
-        const dates = [
-          formatDate(futureDateByDays(new Date(), 4)),
-          formatDate(futureDateByDays(new Date(), 3)),
-          formatDate(futureDateByDays(new Date(), 2)),
-          formatDate(futureDateByDays(new Date(), 1)),
-          formatDate(today),
-        ];
+          const today = new Date();
+          const dates = [
+            formatDate(futureDateByDays(new Date(), 4)),
+            formatDate(futureDateByDays(new Date(), 3)),
+            formatDate(futureDateByDays(new Date(), 2)),
+            formatDate(futureDateByDays(new Date(), 1)),
+            formatDate(today),
+          ];
 
-        const url = `http://api.marketstack.com/v1/eod?access_key=${
-          api.marketstack
-        }&symbols=${symbolString}&date_from=${dates[0]}&date_to=${dates[dates.length - 1]}`;
-        fetch(url, {
-          method: 'GET',
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.error) {
-              helper.error(`(${data.error.code}) ${data.error.message}`);
-              throw data.error.message;
-            }
+          const url = `http://api.marketstack.com/v1/eod?access_key=${
+            api.marketstack
+          }&symbols=${symbolString}&date_from=${dates[0]}&date_to=${dates[dates.length - 1]}`;
+          fetch(url, {
+            method: 'GET',
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.error) {
+                helper.error(`(${data.error.code}) ${data.error.message}`);
+                throw data.error.message;
+              }
 
-            const stockData = data.data.reverse();
-            const dailyGrouped = new Map();
-            dates.forEach((day, i) => {
-              const dayResult = stockData.slice(
-                i * symbols.length,
-                i * symbols.length + symbols.length
-              );
-              dailyGrouped.set(day, dayResult);
-            });
-
-            symbols.forEach((symbol) => {
-              const matchedStock = json.find((item) => item.symbol === symbol.split('.')[0]);
-              const stock = new Stock(
-                matchedStock.exchange,
-                matchedStock.symbol,
-                matchedStock.company_name
-              );
-              const requiredStockSymbol = stock.requiresExchange()
-                ? stock.symbol + '.' + stock.exchange
-                : stock.symbol;
-
-              const labels = [];
-              const prices = [];
-              dailyGrouped.forEach((day, key) => {
-                labels.push(getWeekday(new Date(key /*day.date*/))); // labels.push(key)
-                prices.push(day.find((s) => s.symbol == requiredStockSymbol).adj_close);
+              const stockData = data.data.reverse();
+              const dailyGrouped = new Map();
+              dates.forEach((day, i) => {
+                const dayResult = stockData.slice(
+                  i * symbols.length,
+                  i * symbols.length + symbols.length
+                );
+                dailyGrouped.set(day, dayResult);
               });
 
-              const fridayStockData = dailyGrouped
-                .get(dates[dates.length - 1])
-                .find((data) => data.symbol == requiredStockSymbol);
+              symbols.forEach((symbol) => {
+                const matchedStock = json.find((item) => item.symbol === symbol.split('.')[0]);
+                const stock = new Stock(
+                  matchedStock.exchange,
+                  matchedStock.symbol,
+                  matchedStock.company_name
+                );
+                const requiredStockSymbol = stock.requiresExchange()
+                  ? stock.symbol + '.' + stock.exchange
+                  : stock.symbol;
 
-              client.guilds.cache.forEach((guild) => {
-                const GUILD_ID = guild.id;
-                findChannelsOnServer(client, GUILD_ID).forEach((channel) => {
-                  stock
-                    .sendEmbedWithChart(
-                      new StockData(
-                        stock.company_name,
-                        fridayStockData.exchange,
-                        fridayStockData.symbol.split('.')[0],
-                        fridayStockData.close,
-                        fridayStockData.open,
-                        fridayStockData.close,
-                        fridayStockData.high,
-                        fridayStockData.low,
-                        fridayStockData.close - fridayStockData.open,
-                        ((fridayStockData.close - fridayStockData.open) * 100) /
+                const labels = [];
+                const prices = [];
+                dailyGrouped.forEach((day, key) => {
+                  labels.push(getWeekday(new Date(key /*day.date*/))); // labels.push(key)
+                  prices.push(day.find((s) => s.symbol == requiredStockSymbol).adj_close);
+                });
+
+                const fridayStockData = dailyGrouped
+                  .get(dates[dates.length - 1])
+                  .find((data) => data.symbol == requiredStockSymbol);
+
+                client.guilds.cache.forEach((guild) => {
+                  const GUILD_ID = guild.id;
+                  findChannelsOnServer(client, GUILD_ID).forEach((channel) => {
+                    stock
+                      .sendEmbedWithChart(
+                        new StockData(
+                          stock.company_name,
+                          fridayStockData.exchange,
+                          fridayStockData.symbol.split('.')[0],
                           fridayStockData.close,
-                        new Date(fridayStockData.date)
-                      ),
-                      createChart(stock, labels, prices),
-                      client
-                    )
-                    .catch((err) => console.error(err));
+                          fridayStockData.open,
+                          fridayStockData.close,
+                          fridayStockData.high,
+                          fridayStockData.low,
+                          fridayStockData.close - fridayStockData.open,
+                          ((fridayStockData.close - fridayStockData.open) * 100) /
+                            fridayStockData.close,
+                          new Date(fridayStockData.date)
+                        ),
+                        createChart(stock, labels, prices),
+                        client
+                      )
+                      .catch((err) => {
+                        throw err;
+                      });
+                  });
                 });
               });
             });
-          });
+        } catch (error) {
+          logger.error('Sending stock information', error);
+          helper.error(error);
+        }
       } else {
         json.forEach((item, index) => {
           try {
@@ -159,6 +182,7 @@ client.on('ready', async () => {
               });
             }, index * REQUEST_TIMEOUT);
           } catch (error) {
+            if (!PRODUCTION) logger.error('Sending stock information', error);
             helper.error(error);
           }
         });
@@ -182,11 +206,11 @@ client.on('message', (msg) => {
     action = cmd;
   let argValues = {};
   let itemIndex = -1;
-
+  if (PRODUCTION) logger.log('Use command', `${msg.author.tag} tried using command ${msg.content}`);
   switch (action) {
     case 'VERSION':
     case 'version':
-      msg.reply(`ich laufe auf der Version ${version}!`);
+      msg.reply(`Ich laufe auf der Version ${version}!`);
       break;
 
     // <prefix> <all||get-all>
@@ -261,7 +285,7 @@ client.on('message', (msg) => {
     case 'add':
       if (args.length !== 4) {
         msg.reply(
-          'versuche es mit `' + settings.prefix + ' add <company_name> <symbol.exchange>`!'
+          'Versuche es mit `' + settings.prefix + ' add <company_name> <symbol.exchange>`!'
         );
         return;
       }
@@ -280,7 +304,7 @@ client.on('message', (msg) => {
           (stock) => stock.exchange === argValues.exchange && stock.symbol === argValues.symbol
         );
         if (itemIndex !== -1) {
-          msg.reply(`der Aktie ${argValues.symbol}.${argValues.exchange} wird bereits gefolgt!`);
+          msg.reply(`Der Aktie ${argValues.symbol}.${argValues.exchange} wird bereits gefolgt!`);
           return;
         }
 
@@ -291,14 +315,14 @@ client.on('message', (msg) => {
           if (err) throw err;
         });
 
-        msg.reply(`die Aktie ${argValues.symbol}.${argValues.exchange} wurde hinzugefügt!`);
+        msg.reply(`Die Aktie ${argValues.symbol}.${argValues.exchange} wurde hinzugefügt!`);
       });
       break;
 
     // <prefix> remove <symbol.exchange>
     case 'remove':
       if (args.length !== 3) {
-        msg.reply('versuche es mit `' + settings.prefix + ' remove <symbol.exchange>`!');
+        msg.reply('Versuche es mit `' + settings.prefix + ' remove <symbol.exchange>`!');
         return;
       }
 
@@ -315,7 +339,7 @@ client.on('message', (msg) => {
         );
 
         if (itemIndex == -1) {
-          msg.reply(`der Aktie ${argValues.symbol}.${argValues.exchange} wird nicht gefolgt!`);
+          msg.reply(`Der Aktie ${argValues.symbol}.${argValues.exchange} wird nicht gefolgt!`);
           return;
         }
 
@@ -323,13 +347,22 @@ client.on('message', (msg) => {
         fs.writeFile(__dirname + settings.list, updatedList, (err) => {
           if (err) throw err;
         });
-        msg.reply(`die Aktie ${argValues.symbol}.${argValues.exchange} wurde entfernt!`);
+        msg.reply(`Die Aktie ${argValues.symbol}.${argValues.exchange} wurde entfernt!`);
       });
 
       break;
 
+    case 'help':
     default:
-      // Send command list as reply
+      msg.reply(
+        `Versuche es mit\n` +
+          '`help` - Get a list of all commands\n' +
+          '`version` - Get the current bot version\n' +
+          '`all`|`get-all` - Get stock informations\n' +
+          '`list` - Get a list of all subscribed stocks\n' +
+          '`add` - Add a new stock\n' +
+          '`remove` - Remove a stock\n'
+      );
       break;
   }
 });
